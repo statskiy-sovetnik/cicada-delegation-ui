@@ -39,8 +39,8 @@ export function App() {
 
   const wrongAccount = isConnected && address?.toLowerCase() !== DELEGATOR.toLowerCase()
   const wrongChain = isConnected && chainId !== base.id
-  // Выдавать авторизацию может только сам делегатор: апрув на гейдже меняет
-  // состояние его аккаунта, с чужого адреса он просто не сработает.
+  // Выдавать апрув может только сам делегатор: он меняет состояние его
+  // аккаунта на гейдже, с чужого адреса просто не сработает.
   const canApprove = isConnected && !wrongAccount && !wrongChain
 
   const enough =
@@ -89,22 +89,22 @@ export function App() {
               застейкано в гейдже <em>{formatUnits(staked, 18)} LP</em>
             </li>
             <li className={enough ? 'ok' : 'fail'}>
-              <span>{enough ? '✓' : '✗'}</span> авторизация Metarouter
+              <span>{enough ? '✓' : '✗'}</span> апрув Metarouter
               {allowance !== undefined && <em> — allowance {formatUnits(allowance, 18)} LP</em>}
-              {blanket === true && <em> · выдана бессрочная (setApprovalForAll)</em>}
+              {blanket === true && <em> · бессрочный, setApprovalForAll</em>}
             </li>
           </ul>
         )}
 
         <p className="muted">
-          Без авторизации запись каталога не исполнится: роутер снимает стейк за владельца.
-          Выдаётся она ровно на размер позиции и списывается при выходе.
+          Без апрува запись каталога не исполнится: роутер снимает стейк за владельца.
+          Выдаётся ровно на размер позиции и списывается при выходе.
         </p>
 
         {!confirming ? (
           <div className="row">
             <button onClick={() => setConfirming(true)} disabled={!canApprove || staked === undefined || enough === true}>
-              {enough === true ? 'Авторизация уже выдана' : 'Авторизовать Metarouter'}
+              {enough === true ? 'Апрув уже выдан' : 'Approve Metarouter'}
             </button>
             <button className="link" onClick={() => void refetch()}>
               обновить
@@ -118,7 +118,7 @@ export function App() {
             </p>
             <div className="row">
               <button onClick={() => void onApprove()} disabled={isPending}>
-                {isPending ? 'Подтвердите в кошельке…' : 'Да, авторизовать'}
+                {isPending ? 'Подтвердите в кошельке…' : 'Да, выдать апрув'}
               </button>
               <button className="link" onClick={() => setConfirming(false)}>
                 отмена
