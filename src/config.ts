@@ -4,7 +4,12 @@
  */
 import { getAddress } from 'viem'
 
-import { ALCHEMY_API_KEY, DELEGATOR_ADDRESS, WALLETCONNECT_PROJECT_ID } from 'virtual:ui-env'
+import {
+  ALCHEMY_API_KEY,
+  DELEGATOR_ADDRESS,
+  EXECUTOR_URL,
+  WALLETCONNECT_PROJECT_ID,
+} from 'virtual:ui-env'
 
 export const RPC_URL = `https://base-mainnet.g.alchemy.com/v2/${ALCHEMY_API_KEY}`
 export const WC_PROJECT_ID = WALLETCONNECT_PROJECT_ID
@@ -14,5 +19,8 @@ export const WC_PROJECT_ID = WALLETCONNECT_PROJECT_ID
  * доступны только когда подключён именно этот адрес.
  */
 export const DELEGATOR = getAddress(DELEGATOR_ADDRESS)
+
+/** Executor: каталог записей и приём подписи. */
+export const EXECUTOR_BASE_URL = EXECUTOR_URL
 
 export const BASESCAN_TX = (hash: string) => `https://basescan.org/tx/${hash}`

@@ -24,3 +24,6 @@ out/
 .vscode/
 .idea/
 .DS_Store
+
+# Артефакт инкрементальной сборки TypeScript
+*.tsbuildinfo

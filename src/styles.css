@@ -23,7 +23,7 @@ body {
 }
 
 main {
-  max-width: 640px;
+  max-width: 1040px;
   margin: 0 auto;
   padding: 32px 16px 64px;
 }
@@ -161,4 +161,159 @@ p {
 .checks em {
   color: var(--muted);
   font-style: normal;
+}
+
+/* ── Запись каталога: сворачивается, в шапке название, статус и сеть ── */
+
+.action {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 0 20px;
+  margin-bottom: 12px;
+}
+
+.action > summary {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 16px 0;
+  cursor: pointer;
+  list-style: none;
+}
+
+.action > summary::-webkit-details-marker {
+  display: none;
+}
+
+.action > summary::before {
+  content: '▸';
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.action[open] > summary::before {
+  content: '▾';
+}
+
+.action[open] > summary {
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 12px;
+}
+
+.action-name {
+  font-size: 16px;
+  font-weight: 600;
+  margin-right: auto;
+}
+
+.badge {
+  font-size: 12px;
+  font-weight: 500;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  padding: 2px 10px;
+  white-space: nowrap;
+}
+
+/* Оранжевый текстом, в отличие от .warn — та рисует рамку блока. */
+.warn-text {
+  color: var(--warn);
+}
+
+.action > :last-child {
+  margin-bottom: 16px;
+}
+
+/* ── Разбор операции: две колонки, значение не переносится ── */
+
+.summary {
+  margin: 0 0 12px;
+  font-size: 13px;
+}
+
+.summary > div {
+  display: grid;
+  grid-template-columns: 180px minmax(230px, 1fr);
+  gap: 12px;
+  padding: 3px 0;
+}
+
+.summary dt {
+  color: var(--muted);
+}
+
+.summary dd {
+  margin: 0;
+}
+
+/* ── Подсказки по наведению ── */
+
+.hint {
+  position: relative;
+  display: inline-block;
+}
+
+.hint-trigger {
+  cursor: help;
+}
+
+/* Кружок с вопросом — только когда триггер это сам знак. */
+.checks .hint > .hint-trigger:not(:has(code)) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 15px;
+  height: 15px;
+  margin-left: 6px;
+  border: 1px solid var(--muted);
+  border-radius: 50%;
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1;
+  vertical-align: middle;
+}
+
+/*
+ * Обёртка прилегает к триггеру вплотную, отступ до видимой рамки — её padding.
+ * Так между ними нет полосы, где курсор оказался бы над карточкой: карточка
+ * окошку не родитель, mouseleave сработал бы на полпути и до кнопки
+ * копирования было бы не доехать.
+ */
+.hint-bubble {
+  position: absolute;
+  left: 0;
+  top: 100%;
+  z-index: 10;
+  display: block;
+  width: max-content;
+  max-width: 460px;
+  padding-top: 8px;
+}
+
+.hint-bubble-inner {
+  display: block;
+  background: #0b0f14;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 45%);
+  white-space: normal;
+}
+
+.bubble-data {
+  display: block;
+  max-height: 180px;
+  overflow-y: auto;
+  margin-bottom: 8px;
+}
+
+button.copy {
+  font-size: 12px;
+  text-decoration: none;
+  color: var(--accent);
 }

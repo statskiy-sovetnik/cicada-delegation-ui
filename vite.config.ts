@@ -44,6 +44,7 @@ export default defineConfig(({ mode }) => {
         ALCHEMY_API_KEY: env.ALCHEMY_API_KEY!.trim(),
         WALLETCONNECT_PROJECT_ID: env.WALLETCONNECT_PROJECT_ID?.trim() ?? '',
         DELEGATOR_ADDRESS: env.DELEGATOR_ADDRESS!.trim(),
+        EXECUTOR_URL: env.EXECUTOR_URL?.trim() || 'http://localhost:8787',
       }),
     ],
     server: { port: 5174 },
