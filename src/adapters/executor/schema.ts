@@ -27,6 +27,13 @@ const slug = z.string().min(1).regex(/^[a-z0-9]+(-[a-z0-9]+)*$/, {
 
 export const actionStatusSchema = z.enum(['draft', 'signed'])
 
+/** Исполнение, израсходовавшее запись (5.7). Повторно она неисполнима. */
+export const spentRefSchema = z.object({
+  executionId: z.string().min(1),
+  txHash: z.string().nullable(),
+  blockNumber: z.number().int().nullable(),
+})
+
 export const actionSummarySchema = z.object({
   actionId: slug,
   name: z.string(),
@@ -34,6 +41,7 @@ export const actionSummarySchema = z.object({
   enabled: z.boolean(),
   status: actionStatusSchema,
   version: z.number().int().positive(),
+  spent: z.boolean(),
   createdAt: z.string(),
 })
 
@@ -77,6 +85,7 @@ export const decodedActionSchema = z.object({
   enabled: z.boolean(),
   status: actionStatusSchema,
   version: z.number().int().positive(),
+  spentBy: spentRefSchema.nullable(),
   steps: z.array(decodedStepSchema).min(1),
 })
 
@@ -175,6 +184,7 @@ export const errorResponseSchema = z.object({
 
 export type ActionStatus = z.infer<typeof actionStatusSchema>
 export type ActionSummary = z.infer<typeof actionSummarySchema>
+export type SpentRef = z.infer<typeof spentRefSchema>
 export type DecodedCaveat = z.infer<typeof decodedCaveatSchema>
 export type DecodedDelegation = z.infer<typeof decodedDelegationSchema>
 export type DecodedStep = z.infer<typeof decodedStepSchema>

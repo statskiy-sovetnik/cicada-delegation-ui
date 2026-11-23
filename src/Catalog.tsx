@@ -15,15 +15,17 @@ import { describeCaveats } from './caveats.ts'
 import { typedDataFor } from './delegation.ts'
 import { ExecutionProgress } from './Execution.tsx'
 import { Copy, Hint } from './Hint.tsx'
+import { BASESCAN_TX } from './config.ts'
 import { adapterFor } from './positions/index.ts'
 import type { CaveatView, PositionReport, Remedy } from './types/index.ts'
 
 const short = (value: string) => `${value.slice(0, 10)}…${value.slice(-8)}`
 
-/** Пометка записи. Приговор по позиции и статус подписи — разные вещи (5.2 ui-stage-1). */
-type Mark = 'critical' | 'unsigned' | 'warning' | 'ok'
+/** Пометка записи. Приговор по позиции и состояние записи — разные вещи (5.2 ui-stage-1). */
+type Mark = 'spent' | 'critical' | 'unsigned' | 'warning' | 'ok'
 
 const MARK_LABEL: Record<Mark, string> = {
+  spent: 'исполнено',
   critical: 'critical',
   unsigned: 'требует подписи',
   warning: 'warning',
@@ -32,15 +34,22 @@ const MARK_LABEL: Record<Mark, string> = {
 
 /** Цвет пометки. «Требует подписи» — оранжевый, как предупреждение. */
 const MARK_CLASS: Record<Mark, string> = {
+  spent: 'muted',
   critical: 'bad',
   unsigned: 'warn-text',
   warning: 'warn-text',
   ok: 'good',
 }
 
-function markFor(status: 'draft' | 'signed', report: PositionReport | null): Mark {
+/**
+ * Израсходованная запись перебивает всё остальное: подписывать и исполнять уже
+ * нечего, а сверка с позицией для неё бессмысленна — `LimitedCalls` исчерпан, и
+ * повторно она неисполнима ни через Executor, ни ончейн (5.7).
+ */
+function markFor(summary: ActionSummary, report: PositionReport | null): Mark {
+  if (summary.spent) return 'spent'
   if (report?.verdict === 'critical') return 'critical'
-  if (status === 'draft') return 'unsigned'
+  if (summary.status === 'draft') return 'unsigned'
   if (report?.verdict === 'warning') return 'warning'
   return 'ok'
 }
@@ -203,9 +212,11 @@ function ActionCard({
 
   // Кнопка гаснет не только из-за кошелька: пока запись не загрузилась,
   // подписывать нечего. Причина должна называться в обоих случаях.
-  const unavailable = blocked ?? (raw === null ? 'запись не загрузилась из Executor' : null)
+  const unavailable = summary.spent
+    ? 'запись исполнена и израсходована'
+    : (blocked ?? (raw === null ? 'запись не загрузилась из Executor' : null))
 
-  const mark = markFor(summary.status, report)
+  const mark = markFor(summary, report)
   const delegation = decoded?.steps[0].delegations[0]
   const network = wagmi.chains.find((chain) => chain.id === summary.chainId)?.name ?? summary.chainId
 
@@ -222,13 +233,29 @@ function ActionCard({
         {!summary.enabled && ' · выключена'}
       </p>
 
-      {report && (
+      {decoded?.spentBy && (
+        <p className="muted">
+          Статус: запись исполнена
+          {decoded.spentBy.txHash && (
+            <>
+              {' '}
+              <a href={BASESCAN_TX(decoded.spentBy.txHash)} target="_blank" rel="noreferrer">
+                транзакцией {short(decoded.spentBy.txHash)}
+              </a>
+            </>
+          )}
+          {decoded.spentBy.blockNumber !== null && `, блок ${decoded.spentBy.blockNumber}`}. Повторно
+          она неисполнима: LimitedCalls исчерпан.
+        </p>
+      )}
+
+      {report && !summary.spent && (
         <p className={MARK_CLASS[mark]}>
           Статус: {mark === 'ok' && '✓ '}
           {report.reason}
         </p>
       )}
-      {unknownPosition && (
+      {unknownPosition && !summary.spent && (
         <p className="warn">
           позиция не распознана: адаптера для этого контракта нет, сверить запись с состоянием
           сети нечем
@@ -293,7 +320,9 @@ function ActionCard({
       )}
 
       <div className="row">
-        {summary.status === 'draft' && (
+        {/* У израсходованной записи кнопки не гаснут, а исчезают: делать с ней
+            уже нечего, и мёртвый ряд кнопок только путал бы. */}
+        {!summary.spent && summary.status === 'draft' && (
           <button
             onClick={() => void onSign()}
             disabled={unavailable !== null || signing || busy !== null}
@@ -301,16 +330,17 @@ function ActionCard({
             {busy === 'sign' ? 'Подтвердите в кошельке…' : 'Подписать'}
           </button>
         )}
-        {report?.remedies.map((remedy) => (
-          <button
-            key={remedy.id}
-            onClick={() => void onRemedy(remedy)}
-            disabled={unavailable !== null || writing || busy !== null}
-          >
-            {busy === remedy.id ? 'Подтвердите в кошельке…' : remedy.label}
-          </button>
-        ))}
-        {summary.status === 'signed' && summary.enabled && !confirmingExecute && (
+        {!summary.spent &&
+          report?.remedies.map((remedy) => (
+            <button
+              key={remedy.id}
+              onClick={() => void onRemedy(remedy)}
+              disabled={unavailable !== null || writing || busy !== null}
+            >
+              {busy === remedy.id ? 'Подтвердите в кошельке…' : remedy.label}
+            </button>
+          ))}
+        {!summary.spent && summary.status === 'signed' && summary.enabled && !confirmingExecute && (
           <button onClick={() => setConfirmingExecute(true)} disabled={busy !== null}>
             Исполнить
           </button>

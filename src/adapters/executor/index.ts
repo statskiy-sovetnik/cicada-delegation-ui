@@ -110,4 +110,5 @@ export type {
   ExecutionStatus,
   RawAction,
   RawStep,
+  SpentRef,
 } from './schema.ts'
