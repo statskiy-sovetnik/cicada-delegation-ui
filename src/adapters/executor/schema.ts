@@ -104,6 +104,57 @@ export const attachSignatureRequestSchema = z.object({
   signatures: z.array(nonEmptyHex).min(1),
 })
 
+/** Тело POST /execute, 5.2. Только идентификаторы — ни calldata, ни адресов. */
+export const executeRequestSchema = z.object({
+  ids: z.array(slug).min(1),
+})
+
+/** Ответ приходит в момент отправки транзакции, до включения в блок (5.2). */
+export const executeResponseSchema = z.object({
+  executionId: z.string().min(1),
+  txHash: nonEmptyHex,
+  status: z.literal('pending'),
+})
+
+/** Словарь статусов исполнения, 5.4. Нетерминальный только `pending`. */
+export const executionStatusSchema = z.enum([
+  'validation_failed',
+  'simulation_success',
+  'simulation_reverted',
+  'simulation_insufficient_gas',
+  'simulation_failed',
+  'estimate_gas_success',
+  'estimate_gas_reverted',
+  'estimate_gas_insufficient_gas',
+  'estimate_gas_failed',
+  'pending',
+  'rpc_failed',
+  'onchain_executed',
+  'onchain_reverted',
+  'onchain_failed',
+])
+
+export const executionSchema = z.object({
+  executionId: z.string().min(1),
+  status: executionStatusSchema,
+  statusDetail: z.string().nullable(),
+  txHash: z.string().nullable(),
+  operator: z.string().nullable(),
+  chainId: z.number().int().positive().nullable(),
+  blockNumber: z.number().int().nullable(),
+  gasUsed: z.number().int().nullable(),
+  caller: z.string().nullable(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+  actions: z.array(
+    z.object({
+      actionId: slug,
+      version: z.number().int().positive(),
+      position: z.number().int().nonnegative(),
+    }),
+  ),
+})
+
 /**
  * Коды отказа. Код 409 приходит и на занятый идентификатор, и на уже
  * исполненное действие, поэтому различать следует по code, а не по статусу.
@@ -130,4 +181,7 @@ export type DecodedStep = z.infer<typeof decodedStepSchema>
 export type DecodedAction = z.infer<typeof decodedActionSchema>
 export type RawStep = z.infer<typeof rawStepSchema>
 export type RawAction = z.infer<typeof rawActionSchema>
+export type ExecuteResponse = z.infer<typeof executeResponseSchema>
+export type Execution = z.infer<typeof executionSchema>
+export type ExecutionStatus = z.infer<typeof executionStatusSchema>
 export type ErrorCode = z.infer<typeof errorCodeSchema>

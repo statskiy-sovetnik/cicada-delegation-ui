@@ -8,6 +8,9 @@ import {
   attachSignatureResponseSchema,
   decodedActionSchema,
   errorResponseSchema,
+  executeRequestSchema,
+  executeResponseSchema,
+  executionSchema,
   rawActionSchema,
 } from './schema.ts'
 
@@ -80,6 +83,20 @@ export function attachSignatures(actionId: string, signatures: Hex[]) {
   })
 }
 
+/**
+ * Запуск исполнения (5.2).
+ *
+ * Ответ возвращается в момент отправки транзакции, до включения в блок: исход
+ * доводится опросом `fetchExecution`.
+ */
+export function postExecute(ids: string[]) {
+  const body = executeRequestSchema.parse({ ids })
+  return call('/execute', executeResponseSchema, { method: 'POST', body: JSON.stringify(body) })
+}
+
+export const fetchExecution = (executionId: string) =>
+  call(`/execution/${encodeURIComponent(executionId)}`, executionSchema)
+
 export type {
   ActionStatus,
   ActionSummary,
@@ -88,6 +105,9 @@ export type {
   DecodedDelegation,
   DecodedStep,
   ErrorCode,
+  ExecuteResponse,
+  Execution,
+  ExecutionStatus,
   RawAction,
   RawStep,
 } from './schema.ts'

@@ -317,3 +317,22 @@ button.copy {
   text-decoration: none;
   color: var(--accent);
 }
+
+/* Крутилка ожидания: исполнение идёт дольше одного запроса. */
+.spinner {
+  display: inline-block;
+  width: 11px;
+  height: 11px;
+  margin-right: 8px;
+  vertical-align: -1px;
+  border: 2px solid var(--line);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

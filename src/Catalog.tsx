@@ -8,10 +8,12 @@ import {
   fetchAction,
   fetchActionRaw,
   listActions,
+  postExecute,
 } from './adapters/executor/index.ts'
 import type { ActionSummary, DecodedAction, RawAction } from './adapters/executor/index.ts'
 import { describeCaveats } from './caveats.ts'
 import { typedDataFor } from './delegation.ts'
+import { ExecutionProgress } from './Execution.tsx'
 import { Copy, Hint } from './Hint.tsx'
 import { adapterFor } from './positions/index.ts'
 import type { CaveatView, PositionReport, Remedy } from './types/index.ts'
@@ -99,6 +101,8 @@ function ActionCard({
   const [unknownPosition, setUnknownPosition] = useState(false)
   const [busy, setBusy] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [executionId, setExecutionId] = useState<string | null>(null)
+  const [confirmingExecute, setConfirmingExecute] = useState(false)
 
   const load = useCallback(async () => {
     setError(null)
@@ -154,6 +158,26 @@ function ActionCard({
       await load()
     } catch (e) {
       setError(message(e))
+    } finally {
+      setBusy(null)
+    }
+  }
+
+  /**
+   * Запуск исполнения. Временная кнопка: в рабочем интерфейсе исполнение
+   * запускают источники сигналов (6 executor-stage-1), а не человек. Нужна,
+   * пока сквозной путь проверяется руками.
+   */
+  async function onExecute() {
+    setError(null)
+    setConfirmingExecute(false)
+    setBusy('execute')
+    try {
+      const started = await postExecute([summary.actionId])
+      setExecutionId(started.executionId)
+      await load()
+    } catch (e) {
+      setError(e instanceof ExecutorError ? `${e.code}: ${e.message}` : message(e))
     } finally {
       setBusy(null)
     }
@@ -286,10 +310,41 @@ function ActionCard({
             {busy === remedy.id ? 'Подтвердите в кошельке…' : remedy.label}
           </button>
         ))}
+        {summary.status === 'signed' && summary.enabled && !confirmingExecute && (
+          <button onClick={() => setConfirmingExecute(true)} disabled={busy !== null}>
+            Исполнить
+          </button>
+        )}
         <button className="link" onClick={() => void load()}>
           обновить
         </button>
       </div>
+
+      {confirmingExecute && (
+        <div className="card">
+          <p className="warn">
+            Executor отправит транзакцию в сеть. Запись одноразовая: после успешного исполнения
+            она мертва навсегда, а позиция закроется. Продолжить?
+          </p>
+          <div className="row">
+            <button onClick={() => void onExecute()} disabled={busy !== null}>
+              {busy === 'execute' ? 'Отправляем…' : 'Да, исполнить'}
+            </button>
+            <button className="link" onClick={() => setConfirmingExecute(false)}>
+              отмена
+            </button>
+          </div>
+        </div>
+      )}
+
+      {busy === 'execute' && !executionId && (
+        <p className="muted">
+          <span className="spinner" />
+          Executor валидирует, симулирует и отправляет транзакцию…
+        </p>
+      )}
+
+      {executionId && <ExecutionProgress executionId={executionId} />}
 
       {unavailable !== null && <p className="muted">Действия недоступны: {unavailable}.</p>}
 
