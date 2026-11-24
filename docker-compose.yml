@@ -1,0 +1,20 @@
+# Локальный запуск собранного образа.
+#
+#   docker compose build
+#   docker compose up -d        → http://localhost:5174
+#
+# Значения берутся из .env — того же, что и для `yarn dev`. В образ они не
+# попадают: контейнер выкладывает их в env.js при запуске.
+#
+# EXECUTOR_URL должен быть адресом, который откроется из браузера, а не из
+# контейнера: запросы к Executor делает страница, а не nginx.
+
+services:
+  ui:
+    build: .
+    image: cicada-delegation-ui
+    env_file: .env
+    ports:
+      - '${UI_PORT:-5174}:8080'
+    init: true
+    restart: unless-stopped

@@ -1,0 +1,21 @@
+# Всё, что не нужно сборке. Конфигурация приходит окружением, .env в образ не
+# попадает ни в каком виде.
+.git
+.gitignore
+node_modules
+dist
+build
+out
+.env
+.env.*
+!.env.example
+*.tsbuildinfo
+Dockerfile
+docker-compose.yml
+.dockerignore
+README.md
+CLAUDE.md
+*.log
+.vscode
+.idea
+.DS_Store
